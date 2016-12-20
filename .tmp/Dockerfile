@@ -1,9 +1,9 @@
 FROM java:8
 
 
-ENV APACHE_SPARK_VERSION 1.6.1
-ENV APACHE_HADOOP_VERSION 2.6
-ENV APACHE_TOREE_PIP_PACKAGE https://dist.apache.org/repos/dist/dev/incubator/toree/0.1.0/rc3/toree-pip/apache-toree-0.1.0.tar.gz
+ENV APACHE_SPARK_VERSION 2.0.2
+ENV APACHE_HADOOP_VERSION 2.7
+ENV APACHE_TOREE_PIP_PACKAGE https://dist.apache.org/repos/dist/dev/incubator/toree/0.2.0/snapshots/dev1/toree-pip/toree-0.2.0.dev1.tar.gz
 
 
 RUN cd /tmp && \
