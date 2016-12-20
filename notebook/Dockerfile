@@ -197,6 +197,7 @@ RUN conda create --quiet --yes -p $CONDA_DIR/envs/python2 python=2.7 \
 RUN bash -c '. activate python2 && \
     python -m ipykernel.kernelspec --prefix=$CONDA_DIR && \
     . deactivate'
+
 # Set PYSPARK_HOME in the python2 spec
 RUN jq --arg v "$CONDA_DIR/envs/python2/bin/python" \
         '.["env"]["PYSPARK_PYTHON"]=$v' \
@@ -230,4 +231,8 @@ RUN conda config --add channels r && \
 
 # Apache Toree kernel
 RUN pip install https://dist.apache.org/repos/dist/dev/incubator/toree/0.1.0/rc3/toree-pip/apache-toree-0.1.0.tar.gz
-RUN jupyter toree install --user
+RUN jupyter toree install --user --interpreters=PySpark,SQL,Scala,SparkR
+
+#Set by default python2.7
+ENV PATH "$CONDA_DIR/envs/python2/bin/:$PATH"
+COPY spark-properties.conf /home/$NB_USER/work/

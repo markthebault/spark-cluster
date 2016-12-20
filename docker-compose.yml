@@ -1,7 +1,8 @@
 version: '2'
 services:
   master:
-    image: marco565/spark:1.6.1
+    image: markthebault/spark:1.6.1
+    container_name: spark-master
     command: /usr/local/spark/bin/spark-class org.apache.spark.deploy.master.Master -h master
     hostname: master
     environment:
@@ -27,7 +28,7 @@ services:
       - spark-clstr
 
   worker:
-    image: marco565/spark:1.6.1
+    image: markthebault/spark:1.6.1
     command: /usr/local/spark/bin/spark-class org.apache.spark.deploy.worker.Worker -c 2 -m 4gb spark://master:7077
     hostname: worker
     environment:
@@ -50,13 +51,14 @@ services:
       - spark-clstr
 
   jupyter:
-    image: testjupyter:1.6.1
+    image: markthebault/jupyter-spark:1.6.1
+    container_name: spark-jupyter
     ports:
       - 8888:8888
     networks:
       - spark-clstr
     environment:
-      - SPARK_OPTS="--master=spark://master:7077"
+      - SPARK_OPTS=--master spark://master:7077 --executor-memory 3gb --properties-file ~/work/spark-properties.conf
 
 networks:
   spark-clstr:
