@@ -22,8 +22,9 @@ build-spark:
 
 
 build-jupyter:
-	mkdir -p .tmp
-	cp notebook/Dockerfile.template .tmp/Dockerfile
+	cp -r notebook .tmp
+	rm .tmp/Dockerfile
+	mv .tmp/Dockerfile.template .tmp/Dockerfile
 	#Change spark verson in the Dockerfile
 	sed -i "" "s/%%SPARK_VERSION%%/$(SPARK_VERSION)/g" .tmp/Dockerfile
 	sed -i "" "s/%%HADOOP_VERSION%%/$(HADOOP_VERSION)/g" .tmp/Dockerfile
