@@ -1,5 +1,5 @@
-SPARK_VERSION=1.6.1
-HADOOP_VERSION=2.6
+SPARK_VERSION=2.0.2
+HADOOP_VERSION=2.7
 TOREE_PACKAGE_SPARK_16=https://dist.apache.org/repos/dist/dev/incubator/toree/0.1.0/rc3/toree-pip/apache-toree-0.1.0.tar.gz
 TOREE_PACKAGE_SPARK_2=https://dist.apache.org/repos/dist/dev/incubator/toree/0.2.0/snapshots/dev1/toree-pip/toree-0.2.0.dev1.tar.gz
 
