@@ -1,7 +1,7 @@
 version: '2'
 services:
   master:
-    image: spark:1.6.1
+    image: __SPARK_IMAGE_NAME__
     command: /usr/local/spark/bin/spark-class org.apache.spark.deploy.master.Master -h master
     hostname: master
     environment:
@@ -27,7 +27,7 @@ services:
       - spark-clstr
 
   worker:
-    image: spark:1.6.1
+    image: __SPARK_IMAGE_NAME__
     command: /usr/local/spark/bin/spark-class org.apache.spark.deploy.worker.Worker -c 2 -m 4gb spark://master:7077
     hostname: worker
     environment:
@@ -50,7 +50,7 @@ services:
       - spark-clstr
 
   jupyter:
-    image: jupyter-spark:1.6.1
+    image: __JUPYTER_IMAGE_NAME__
     ports:
       - 8888:8888
     networks:
