@@ -1,8 +1,11 @@
 FROM java:8
 
 
-ENV APACHE_SPARK_VERSION %%SPARK_VERSION%%
-ENV APACHE_HADOOP_VERSION %%HADOOP_VERSION%%
+ENV APACHE_SPARK_VERSION 1.6.1
+ENV APACHE_HADOOP_VERSION 2.6
+ENV CONDA_DIR /opt/conda
+ENV PATH $CONDA_DIR/bin:$PATH
+ENV SHELL /bin/bash
 
 
 RUN cd /tmp && \
@@ -11,3 +14,11 @@ RUN cd /tmp && \
         rm spark-${APACHE_SPARK_VERSION}-bin-hadoop${APACHE_HADOOP_VERSION}.tgz
 
 RUN cd /usr/local && ln -s spark-${APACHE_SPARK_VERSION}-bin-hadoop${APACHE_HADOOP_VERSION} spark
+
+RUN cd /tmp && \
+    mkdir -p $CONDA_DIR && \
+    wget --quiet https://repo.continuum.io/archive/Anaconda3-4.3.0-Linux-x86_64.sh && \
+    /bin/bash Anaconda3-4.3.0-Linux-x86_64.sh -f -b -p $CONDA_DIR && \
+    rm Anaconda3-4.3.0-Linux-x86_64.sh && \
+    conda install --yes python=3.5.2
+

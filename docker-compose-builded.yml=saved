@@ -1,0 +1,62 @@
+version: '2'
+services:
+  master:
+    image: spark:1.6.1
+    command: /usr/local/spark/bin/spark-class org.apache.spark.deploy.master.Master -h master
+    hostname: master
+    environment:
+      SPARK_CONF_DIR: /conf
+      SPARK_MASTER_IP: master
+    expose:
+      - 7001
+      - 7002
+      - 7003
+      - 7004
+      - 7005
+      - 7006
+      - 7077
+      - 6066
+    ports:
+      - 4040:4040
+      - 6066:6066
+      - 7077:7077
+      - 28080:8080
+    #volumes:
+    #  - ./conf/master:/conf
+    networks:
+      - spark-clstr
+
+  worker:
+    image: spark:1.6.1
+    command: /usr/local/spark/bin/spark-class org.apache.spark.deploy.worker.Worker -c 2 -m 4gb spark://master:7077
+    hostname: worker
+    environment:
+      SPARK_CONF_DIR: /conf
+    links:
+      - master
+    expose:
+      - 8081
+    #volumes:
+    #  - ./conf/worker:/conf
+    networks:
+      - spark-clstr
+
+  spark-ui-proxy:
+    image: yanndegat/spark-ui-proxy
+    command: master:8080 9999
+    ports:
+      - 8080:9999
+    networks:
+      - spark-clstr
+
+  jupyter:
+    image: __JUPYTER_IMAGE_NAME__
+    ports:
+      - 8888:8888
+    networks:
+      - spark-clstr
+    environment:
+      - SPARK_OPTS=--master spark://master:7077 --executor-memory 3gb --properties-file ~/work/spark-properties.conf
+
+networks:
+  spark-clstr:

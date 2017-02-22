@@ -14,7 +14,29 @@ RUN cd /tmp && \
 RUN cd /usr/local && ln -s spark-${APACHE_SPARK_VERSION}-bin-hadoop${APACHE_HADOOP_VERSION} spark
 
 
+USER root
 
+
+# Install all jupyter notebook requirements
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update \
+ && apt-get install -y \
+    wget \
+    bzip2 \
+    ca-certificates \
+    locales \
+    git \
+    vim \
+    jed \
+    emacs \
+    build-essential \
+    python-dev \
+    unzip \
+    libsm6 \
+    pandoc \
+    jq \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
 #####################################################
 #####################################################
@@ -22,22 +44,7 @@ RUN cd /usr/local && ln -s spark-${APACHE_SPARK_VERSION}-bin-hadoop${APACHE_HADO
 #####################################################
 #####################################################
 #####################################################
-USER root
 
-# Install all OS dependencies for notebook server that starts but lacks all
-# features (e.g., download as all possible file formats)
-ENV DEBIAN_FRONTEND noninteractive
-RUN REPO=http://cdn-fastly.deb.debian.org \
- && echo "deb $REPO/debian jessie main\ndeb $REPO/debian-security jessie/updates main" > /etc/apt/sources.list \
- && apt-get update && apt-get -yq dist-upgrade \
- && apt-get install -yq --no-install-recommends \
-    wget \
-    bzip2 \
-    ca-certificates \
-    sudo \
-    locales \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
 
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen
@@ -72,16 +79,29 @@ RUN mkdir /home/$NB_USER/work && \
     echo "cacert=/etc/ssl/certs/ca-certificates.crt" > /home/$NB_USER/.curlrc
 
 # Install conda as jovyan
+#RUN cd /tmp && \
+#    mkdir -p $CONDA_DIR && \
+#    wget --quiet https://repo.continuum.io/miniconda/Miniconda3-4.1.11-Linux-x86_64.sh && \
+#    echo "efd6a9362fc6b4085f599a881d20e57de628da8c1a898c08ec82874f3bad41bf *Miniconda3-4.1.11-Linux-x86_64.sh" | sha256sum -c - && \
+#    /bin/bash Miniconda3-4.1.11-Linux-x86_64.sh -f -b -p $CONDA_DIR && \
+#    rm Miniconda3-4.1.11-Linux-x86_64.sh && \
+#    $CONDA_DIR/bin/conda install --quiet --yes conda==4.1.11 && \
+#    $CONDA_DIR/bin/conda config --system --add channels conda-forge && \
+#    $CONDA_DIR/bin/conda config --system --set auto_update_conda false && \
+#    conda clean -tipsy
+
+
 RUN cd /tmp && \
     mkdir -p $CONDA_DIR && \
-    wget --quiet https://repo.continuum.io/miniconda/Miniconda3-4.1.11-Linux-x86_64.sh && \
-    echo "efd6a9362fc6b4085f599a881d20e57de628da8c1a898c08ec82874f3bad41bf *Miniconda3-4.1.11-Linux-x86_64.sh" | sha256sum -c - && \
-    /bin/bash Miniconda3-4.1.11-Linux-x86_64.sh -f -b -p $CONDA_DIR && \
-    rm Miniconda3-4.1.11-Linux-x86_64.sh && \
-    $CONDA_DIR/bin/conda install --quiet --yes conda==4.1.11 && \
+    wget --quiet https://repo.continuum.io/archive/Anaconda3-4.3.0-Linux-x86_64.sh && \
+    /bin/bash Anaconda3-4.3.0-Linux-x86_64.sh -f -b -p $CONDA_DIR && \
+    rm Anaconda3-4.3.0-Linux-x86_64.sh && \
+    $CONDA_DIR/bin/conda install --quiet --yes conda==4.3.0 && \
     $CONDA_DIR/bin/conda config --system --add channels conda-forge && \
     $CONDA_DIR/bin/conda config --system --set auto_update_conda false && \
     conda clean -tipsy
+
+
 
 # Temporary workaround for https://github.com/jupyter/docker-stacks/issues/210
 # Stick with jpeg 8 to avoid problems with R packages
@@ -121,26 +141,7 @@ USER $NB_USER
 #####################################################
 USER root
 
-# Install all OS dependencies for fully functional notebook server
-RUN apt-get update && apt-get install -yq --no-install-recommends \
-    git \
-    vim \
-    jed \
-    emacs \
-    build-essential \
-    python-dev \
-    unzip \
-    libsm6 \
-    pandoc \
-    texlive-latex-base \
-    texlive-latex-extra \
-    texlive-fonts-extra \
-    texlive-fonts-recommended \
-    texlive-generic-recommended \
-    libxrender1 \
-    inkscape \
-    && apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+
 
 # Switch back to jovyan to avoid accidental container runs as root
 USER $NB_USER
@@ -154,54 +155,13 @@ USER $NB_USER
 #####################################################
 USER root
 
-# Util to help with kernel spec later
-RUN apt-get -y update && apt-get -y install jq && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Mesos dependencies
-# Currently, Mesos is not available from Debian Jessie.
-# So, we are installing it from Debian Wheezy. Once it
-# becomes available for Debian Jessie. We should switch
-# over to using that instead.
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF && \
-    DISTRO=debian && \
-    CODENAME=wheezy && \
-    echo "deb http://repos.mesosphere.io/${DISTRO} ${CODENAME} main" > /etc/apt/sources.list.d/mesosphere.list && \
-    apt-get -y update && \
-    apt-get --no-install-recommends -y --force-yes install mesos=0.22.1-1.0.debian78 && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
 
 # Spark and Mesos config
 ENV SPARK_HOME /usr/local/spark
 ENV PYTHONPATH $SPARK_HOME/python:$SPARK_HOME/python/lib/py4j-0.9-src.zip
-ENV MESOS_NATIVE_LIBRARY /usr/local/lib/libmesos.so
-ENV SPARK_OPTS --driver-java-options=-Xms1024M --driver-java-options=-Xmx4096M --driver-java-options=-Dlog4j.logLevel=info
 
 USER $NB_USER
 
-# Install Python 3 packages
-RUN conda install --quiet --yes \
-    'ipywidgets=4.1*' \
-    'pandas=0.17*' \
-    'numexpr=2.5*' \
-    'matplotlib=1.5*' \
-    'scipy=0.17*' \
-    'seaborn=0.7*' \
-    'scikit-learn=0.17*' \
-    && conda clean -tipsy
-
-# Install Python 2 packages and kernel spec
-RUN conda create --quiet --yes -p $CONDA_DIR/envs/python2 python=2.7 \
-    'ipython=4.1*' \
-    'ipywidgets=4.1*' \
-    'pandas=0.17*' \
-    'numexpr=2.5*' \
-    'matplotlib=1.5*' \
-    'scipy=0.17*' \
-    'seaborn=0.7*' \
-    'scikit-learn=0.17*' \
-    pyzmq \
-    && conda clean -tipsy
 
 # Install Python 2 kernel spec into the Python 3 conda environment which
 # runs the notebook server
@@ -222,13 +182,7 @@ USER root
 # RSpark config
 ENV R_LIBS_USER $SPARK_HOME/R/lib
 
-# R pre-requisites
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    fonts-dejavu \
-    gfortran \
-    gcc && apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+
 
 USER $NB_USER
 
@@ -245,5 +199,5 @@ RUN pip install ${APACHE_TOREE_PIP_PACKAGE}
 RUN jupyter toree install --user --interpreters=PySpark,SQL,Scala,SparkR
 
 #Set by default python2.7
-ENV PATH "$CONDA_DIR/envs/python2/bin/:$PATH"
-COPY spark-properties.conf /home/$NB_USER/work/
+#ENV PATH "$CONDA_DIR/envs/python2/bin/:$PATH"
+#COPY spark-properties.conf /home/$NB_USER/work/
