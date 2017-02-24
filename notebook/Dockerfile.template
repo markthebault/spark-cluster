@@ -202,3 +202,8 @@ RUN jupyter toree install --user --interpreters=PySpark,SQL,Scala,SparkR
 #Set by default python2.7
 #ENV PATH "$CONDA_DIR/envs/python2/bin/:$PATH"
 COPY spark-properties.conf /home/$NB_USER/work/
+USER root
+
+RUN chmod 0777 /home/$NB_USER/work/spark-properties.conf
+
+USER $NB_USER
